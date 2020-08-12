@@ -13,11 +13,11 @@
 // @grant        GM.xmlHttpRequest
 // @grant        GM.getValue
 // @grant        GM.setValue
-// @resource     vuetify.scoped.css https://gitcdn.xyz/repo/ShinoharaHare/Animad-Downloader.js/master/public/vuetify.scoped.css
+// @resource     vuetify.scoped.css https://gitcdn.xyz/repo/ShinoharaHare/Animad-Downloader.js/5467a9b50f4f0ecbd8cc42390633f8cf5eac6493/public/vuetify.scoped.css
 // @require      https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js
 // @require      https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js
 // @require      https://unpkg.com/m3u8-parser@4.4.0/dist/m3u8-parser.min.js
-// @require      https://gitcdn.xyz/repo/ShinoharaHare/Animad-Downloader.js/master/public/ffmpeg.js
+// @require      https://gitcdn.xyz/repo/ShinoharaHare/Animad-Downloader.js/5467a9b50f4f0ecbd8cc42390633f8cf5eac6493/public/ffmpeg.js
 // @connect      gamer-cds.cdn.hinet.net
 // @connect      shinoharahare.github.io
 
