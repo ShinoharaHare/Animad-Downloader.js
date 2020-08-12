@@ -1,38 +1,41 @@
 <div id="app">
     <v-app dark>
         <v-main>
-            <v-dialog hide-overlay persistent no-click-animation max-width="800" max-height="500" v-model="show">
+            <v-dialog hide-overlay persistent no-click-animation origin="bottom right" max-width="800" max-height="500"
+                v-model="dialog" ref="dialog">
+
                 <template v-slot:activator="{ on, attrs }">
-                    <v-fab-transition>
-                        <v-btn dark fixed bottom right fab v-bind="attrs" v-on="on">
-                            <v-icon>mdi-download</v-icon>
-                        </v-btn>
-                    </v-fab-transition>
+                    <v-btn dark fixed bottom right fab v-bind="attrs" v-on="on">
+                        <v-icon>mdi-download</v-icon>
+                    </v-btn>
                 </template>
 
                 <v-card dark>
                     <v-card-title class="headline blue-grey darken-4 dragable">動畫瘋-影片下載器
                         <v-spacer></v-spacer>
-                        <v-btn icon @click="show = false">
+                        <v-btn icon @click="dialog = false">
                             <v-icon>mdi-close</v-icon>
                         </v-btn>
                     </v-card-title>
 
-                    <v-card flat :disabled="downloading">
+                    <v-card flat :disabled="downloading" style="overflow-y: hidden;">
                         <v-card-title>選擇畫質</v-card-title>
-                        <v-scale-transition>
-                            <div class="pa-2 text-center" v-show="!src">
+                        <v-fab-transition group>
+                            <div class="pa-2 text-center" v-show="!src" key="1">
                                 <v-card-text class="text-subtitle-1">尚未取得影片資源，請先嘗試播放影片</v-card-text>
                                 <v-progress-linear indeterminate></v-progress-linear>
                             </div>
-                        </v-scale-transition>
 
-                        <v-scale-transition v-for="q in qualities">
-                            <v-btn large rounded outlined class="ma-2" :color="qualityColor(q)" :key="q.height"
-                                @click="download(q)" v-show="src">
-                                <v-icon left size="28">{{qualityIcon(q)}}</v-icon>{{q.height}}P
-                            </v-btn>
-                        </v-scale-transition>
+                            <div class="pa-4" key="2">
+                                <v-scale-transition group>
+                                    <v-btn large rounded outlined class="mr-4" :disabled="downloading"
+                                        :color="qualityColor(q)" :key="i" @click="download(q)"
+                                        v-for="(q, i) in qualities">
+                                        <v-icon left size="28">{{qualityIcon(q)}}</v-icon>{{q.height}}P
+                                    </v-btn>
+                                </v-scale-transition>
+                            </div>
+                        </v-fab-transition>
                     </v-card>
 
                     <v-divider></v-divider>
@@ -40,9 +43,9 @@
                     <v-expand-transition>
                         <v-card flat class="text-center" v-show="downloading" :key="1">
                             <v-card-title>下載進度</v-card-title>
-                            <div class="text-center">{{message}}</div>
+                            <div class="text-center">{{message}} {{speed}}</div>
                             <div class="pa-2">
-                                <v-progress-linear color="light-blue" height="20" :value="progress" striped>
+                                <v-progress-linear color="green" height="20" :value="progress" striped>
                                     {{progressText}}
                                 </v-progress-linear>
                             </div>

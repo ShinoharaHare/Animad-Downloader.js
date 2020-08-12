@@ -7,7 +7,7 @@ const self = new Vue({
     data: {
         name: $('.anime_name h1').text(),
         src: '',
-        show: false,
+        dialog: false,
         downloading: false,
         qualities: [],
         progress: 0,
@@ -15,12 +15,23 @@ const self = new Vue({
         message: '',
         downloaded: null,
         count: 0,
-        aborting: false
+        aborting: false,
+
+        bytes: 0,
+        speed: ''
     },
     methods: {
         async download({ url }) {
             this.downloading = true
             this.message = '下載中...'
+            this.bytes = 0
+            setInterval(() => {
+                let duration = 3
+                let speed = this.bytes / duration / 1024 / 1024
+                this.speed = `${speed.toFixed(2)} MBps`
+                this.bytes = 0
+            }, 3000)
+
             url = resolve(this.src, url)
             let m3u8 = await get(url)
             let { segments } = parseM3U8(m3u8)
@@ -80,6 +91,9 @@ const self = new Vue({
                     this.count++
                     const name = basename(url)
                     const data = await get(url, 'arraybuffer')
+
+                    this.bytes += data.byteLength
+
                     files.push({ name, data })
                     this.downloaded[url] = true
                     this.count--
@@ -117,6 +131,11 @@ const self = new Vue({
             }
         }
     },
+    watch: {
+        dialog() {
+            this.$nextTick(() => this.$refs.dialog.showScroll() )
+        }
+    },
     async mounted() {
         this.src = await getSrc()
         let m3u8 = await get(this.src)
@@ -126,7 +145,7 @@ const self = new Vue({
                 ...playlist.attributes.RESOLUTION,
                 url: resolve(this.src, playlist.uri)
             })
+            await sleep(100)
         }
     }
-});
-
+})

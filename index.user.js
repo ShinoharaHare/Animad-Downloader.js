@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         動畫瘋-影片下載器
 // @namespace    https://shinoharahare.github.io/
-// @version      0.2-beta
+// @version      0.3-beta
 // @description  直接在瀏覽器上下載動畫瘋影片
 // @author       Hare
 // @updateURL    https://github.com/ShinoharaHare/Animad-Downloader.js/raw/master/index.user.js
@@ -60,41 +60,47 @@
         'pointer-events': 'none'
     })
 
-    container.html(`<div id="app">
+    // HTML Start
+
+    container.html(`
+    <div id="app">
     <v-app dark>
         <v-main>
-            <v-dialog hide-overlay persistent no-click-animation max-width="800" max-height="500" v-model="show">
+            <v-dialog hide-overlay persistent no-click-animation origin="bottom right" max-width="800" max-height="500"
+                v-model="dialog" ref="dialog">
+
                 <template v-slot:activator="{ on, attrs }">
-                    <v-fab-transition>
-                        <v-btn dark fixed bottom right fab v-bind="attrs" v-on="on">
-                            <v-icon>mdi-download</v-icon>
-                        </v-btn>
-                    </v-fab-transition>
+                    <v-btn dark fixed bottom right fab v-bind="attrs" v-on="on">
+                        <v-icon>mdi-download</v-icon>
+                    </v-btn>
                 </template>
 
                 <v-card dark>
                     <v-card-title class="headline blue-grey darken-4 dragable">動畫瘋-影片下載器
                         <v-spacer></v-spacer>
-                        <v-btn icon @click="show = false">
+                        <v-btn icon @click="dialog = false">
                             <v-icon>mdi-close</v-icon>
                         </v-btn>
                     </v-card-title>
 
-                    <v-card flat :disabled="downloading">
+                    <v-card flat :disabled="downloading" style="overflow-y: hidden;">
                         <v-card-title>選擇畫質</v-card-title>
-                        <v-scale-transition>
-                            <div class="pa-2 text-center" v-show="!src">
+                        <v-fab-transition group>
+                            <div class="pa-2 text-center" v-show="!src" key="1">
                                 <v-card-text class="text-subtitle-1">尚未取得影片資源，請先嘗試播放影片</v-card-text>
                                 <v-progress-linear indeterminate></v-progress-linear>
                             </div>
-                        </v-scale-transition>
 
-                        <v-scale-transition v-for="q in qualities">
-                            <v-btn large rounded outlined class="ma-2" :color="qualityColor(q)" :key="q.height"
-                                @click="download(q)" v-show="src">
-                                <v-icon left size="28">{{qualityIcon(q)}}</v-icon>{{q.height}}P
-                            </v-btn>
-                        </v-scale-transition>
+                            <div class="pa-4" key="2">
+                                <v-scale-transition group>
+                                    <v-btn large rounded outlined class="mr-4" :disabled="downloading"
+                                        :color="qualityColor(q)" :key="i" @click="download(q)"
+                                        v-for="(q, i) in qualities">
+                                        <v-icon left size="28">{{qualityIcon(q)}}</v-icon>{{q.height}}P
+                                    </v-btn>
+                                </v-scale-transition>
+                            </div>
+                        </v-fab-transition>
                     </v-card>
 
                     <v-divider></v-divider>
@@ -102,9 +108,9 @@
                     <v-expand-transition>
                         <v-card flat class="text-center" v-show="downloading" :key="1">
                             <v-card-title>下載進度</v-card-title>
-                            <div class="text-center">{{message}}</div>
+                            <div class="text-center">{{message}} {{speed}}</div>
                             <div class="pa-2">
-                                <v-progress-linear color="light-blue" height="20" :value="progress" striped>
+                                <v-progress-linear color="green" height="20" :value="progress" striped>
                                     {{progressText}}
                                 </v-progress-linear>
                             </div>
@@ -119,7 +125,12 @@
             </v-dialog>
         </v-main>
     </v-app>
-</div>`)
+</div>
+`)
+
+    // HTML End
+
+    // Script Start
 
     let files = []
     let ffmpeg = null
@@ -130,7 +141,7 @@
         data: {
             name: $('.anime_name h1').text(),
             src: '',
-            show: false,
+            dialog: false,
             downloading: false,
             qualities: [],
             progress: 0,
@@ -138,12 +149,23 @@
             message: '',
             downloaded: null,
             count: 0,
-            aborting: false
+            aborting: false,
+
+            bytes: 0,
+            speed: ''
         },
         methods: {
             async download({ url }) {
                 this.downloading = true
                 this.message = '下載中...'
+                this.bytes = 0
+                setInterval(() => {
+                    let duration = 3
+                    let speed = this.bytes / duration / 1024 / 1024
+                    this.speed = `${speed.toFixed(2)} MBps`
+                    this.bytes = 0
+                }, 3000)
+
                 url = resolve(this.src, url)
                 let m3u8 = await get(url)
                 let { segments } = parseM3U8(m3u8)
@@ -203,6 +225,9 @@
                         this.count++
                         const name = basename(url)
                         const data = await get(url, 'arraybuffer')
+
+                        this.bytes += data.byteLength
+
                         files.push({ name, data })
                         this.downloaded[url] = true
                         this.count--
@@ -240,6 +265,11 @@
                 }
             }
         },
+        watch: {
+            dialog() {
+                this.$nextTick(() => this.$refs.dialog.showScroll())
+            }
+        },
         async mounted() {
             this.src = await getSrc()
             let m3u8 = await get(this.src)
@@ -249,9 +279,13 @@
                     ...playlist.attributes.RESOLUTION,
                     url: resolve(this.src, playlist.uri)
                 })
+                await sleep(100)
             }
         }
-    });
+    })
+
+
+    // Script End
 })();
 
 
