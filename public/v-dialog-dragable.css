@@ -1,0 +1,12 @@
+#app .v-dialog .dragable {
+    cursor: grab;
+    user-select: none;
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    -o-user-select: none;
+}
+
+#app .v-dialog .dragable:active {
+    cursor: grabbing;
+}

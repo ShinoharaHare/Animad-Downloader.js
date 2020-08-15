@@ -31069,5 +31069,9 @@
 }
 
 #app * {
-    font-family: 'Noto Sans TC', "Roboto", sans-serif !important;
+    font-family: 'Noto Sans TC', 'Roboto', sans-serif !important;
+}
+
+#app .v-main__wrap * {
+    pointer-events: all;
 }
