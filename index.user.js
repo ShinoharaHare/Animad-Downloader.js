@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         動畫瘋-影片下載器
 // @namespace    https://shinoharahare.github.io/
-// @version      0.3-beta
+// @version      0.3.1-beta
 // @description  直接在瀏覽器上下載動畫瘋影片
 // @author       Hare
 // @updateURL    https://github.com/ShinoharaHare/Animad-Downloader.js/raw/master/index.user.js
@@ -9,18 +9,18 @@
 // @match        https://ani.gamer.com.tw/animeVideo.php?sn=*
 // @grant        GM.addStyle
 // @grant        GM.getResourceText
-// @grant        GM.getResourceUrl
-// @grant        GM.xmlHttpRequest
 // @grant        GM.getValue
 // @grant        GM.setValue
-// @resource     vuetify.scoped.css https://gitcdn.xyz/repo/ShinoharaHare/Animad-Downloader.js/5467a9b50f4f0ecbd8cc42390633f8cf5eac6493/public/vuetify.scoped.css
+
+// @resource     vuetify.scoped.css https://gitcdn.xyz/cdn/ShinoharaHare/Animad-Downloader.js/c9e1c0e7fddb7c8e873ab3895cd72ea1630fd360/public/vuetify.scoped.css
+// @resource     v-dialog-dragable.css https://gitcdn.xyz/cdn/ShinoharaHare/Animad-Downloader.js/c9e1c0e7fddb7c8e873ab3895cd72ea1630fd360/public/v-dialog-dragable.css
+
 // @require      https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js
 // @require      https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js
 // @require      https://unpkg.com/m3u8-parser@4.4.0/dist/m3u8-parser.min.js
-// @require      https://gitcdn.xyz/repo/ShinoharaHare/Animad-Downloader.js/5467a9b50f4f0ecbd8cc42390633f8cf5eac6493/public/ffmpeg.js
-// @connect      gamer-cds.cdn.hinet.net
-// @connect      shinoharahare.github.io
 
+// @require      https://gitcdn.xyz/repo/ShinoharaHare/Animad-Downloader.js/5467a9b50f4f0ecbd8cc42390633f8cf5eac6493/public/ffmpeg.js
+// @require      https://gitcdn.xyz/cdn/ShinoharaHare/Animad-Downloader.js/c9e1c0e7fddb7c8e873ab3895cd72ea1630fd360/public/v-dialog-dragable.js
 // ==/UserScript==
 
 (async () => {
@@ -28,18 +28,7 @@
     updateConfig()
 
     GM.addStyle(await GM.getResourceText('vuetify.scoped.css'))
-    GM.addStyle(`
-            #app .v-main__wrap * { pointer-events: all; }
-            #app .dragable {
-                cursor: grab;
-                user-select: none;
-                -moz-user-select: none;
-                -khtml-user-select: none;
-                -webkit-user-select: none;
-                -o-user-select: none;
-            }
-            #app .dragable:active { cursor: grabbing; }
-    `)
+    GM.addStyle(await GM.getResourceText('v-dialog-dragable.css'))
 
     addStyle('https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css')
     addStyle('https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900')
@@ -63,16 +52,20 @@
     // HTML Start
 
     container.html(`
-    <div id="app">
+<div id="app" ref="app">
     <v-app dark>
         <v-main>
             <v-dialog hide-overlay persistent no-click-animation origin="bottom right" max-width="800" max-height="500"
-                v-model="dialog" ref="dialog">
+                :retain-focus="false" v-model="dialog" ref="dialog">
 
                 <template v-slot:activator="{ on, attrs }">
-                    <v-btn dark fixed bottom right fab v-bind="attrs" v-on="on">
-                        <v-icon>mdi-download</v-icon>
-                    </v-btn>
+                    <div class="v-btn--fab v-btn--bottom  v-btn--right v-btn--fixed v-size--default" ref="fab">
+                        <v-fab-transition>
+                            <v-btn dark fab v-bind="attrs" v-on="on" v-show="!overlapped">
+                                <v-icon>mdi-download</v-icon>
+                            </v-btn>
+                        </v-fab-transition>
+                    </div>
                 </template>
 
                 <v-card dark>
@@ -150,6 +143,7 @@
             downloaded: null,
             count: 0,
             aborting: false,
+            overlapped: false,
 
             bytes: 0,
             speed: ''
@@ -224,7 +218,7 @@
                         this.downloaded[url] = false
                         this.count++
                         const name = basename(url)
-                        const data = await get(url, 'arraybuffer')
+                        const data = await get(url, 'arrayBuffer')
 
                         this.bytes += data.byteLength
 
@@ -271,6 +265,18 @@
             }
         },
         async mounted() {
+            this.$refs.app.style.display = null
+
+            setInterval(() => {
+                let e1 = document.querySelector('.videoframe')
+                let e2 = this.$refs.fab
+                if (!e1 || !e2) {
+                    this.overlapped = false
+                } else {
+                    this.overlapped = isOverlapping(e1, e2)
+                }
+            }, 100)
+
             this.src = await getSrc()
             let m3u8 = await get(this.src)
             let { playlists } = parseM3U8(m3u8)
@@ -288,6 +294,16 @@
     // Script End
 })();
 
+function isOverlapping(e1, e2) {
+    var rect1 = e1.getBoundingClientRect()
+    var rect2 = e2.getBoundingClientRect()
+    return !(
+        rect1.right < rect2.left ||
+        rect1.left > rect2.right ||
+        rect1.bottom < rect2.top ||
+        rect1.top > rect2.bottom
+    )
+}
 
 async function getSrc() {
     await wait(() => videojs)
@@ -349,13 +365,9 @@ async function updateConfig() {
 
 
 async function get(url, responseType = 'text') {
-    const { response } = await GM.xmlHttpRequest({
-        method: 'GET',
-        url: url,
-        headers: { 'Origin': 'https://ani.gamer.com.tw' },
-        responseType: responseType
-    })
-    return response
+    let response = await fetch(url)
+    let result = await response[responseType]()
+    return result
 }
 
 
@@ -386,44 +398,3 @@ function sleep(ms) {
 function addStyle(url) {
     $('head').append(`<link href="${url}" rel="stylesheet">`)
 }
-
-
-; (() => {
-    const d = {};
-    document.addEventListener("mousedown", e => {
-        const closestDialog = e.target.closest(".v-dialog.v-dialog--active");
-        if (e.button === 0 && closestDialog != null && e.target.classList.contains("dragable")) { // element which can be used to move element
-            d.el = closestDialog; // element which should be moved
-            d.mouseStartX = e.clientX;
-            d.mouseStartY = e.clientY;
-            d.elStartX = d.el.getBoundingClientRect().left;
-            d.elStartY = d.el.getBoundingClientRect().top;
-            d.el.style.position = "fixed";
-            d.el.style.margin = 0;
-            d.oldTransition = d.el.style.transition;
-            d.el.style.transition = "none"
-        }
-    });
-    document.addEventListener("mousemove", e => {
-        if (d.el === undefined) return;
-        d.el.style.left = Math.min(
-            Math.max(d.elStartX + e.clientX - d.mouseStartX, 0),
-            window.innerWidth - d.el.getBoundingClientRect().width
-        ) + "px";
-        d.el.style.top = Math.min(
-            Math.max(d.elStartY + e.clientY - d.mouseStartY, 0),
-            window.innerHeight - d.el.getBoundingClientRect().height
-        ) + "px";
-    });
-    document.addEventListener("mouseup", () => {
-        if (d.el === undefined) return;
-        d.el.style.transition = d.oldTransition;
-        d.el = undefined
-    });
-    setInterval(() => { // prevent out of bounds
-        const dialog = document.querySelector(".v-dialog.v-dialog--active");
-        if (dialog === null) return;
-        dialog.style.left = Math.min(parseInt(dialog.style.left), window.innerWidth - dialog.getBoundingClientRect().width) + "px";
-        dialog.style.top = Math.min(parseInt(dialog.style.top), window.innerHeight - dialog.getBoundingClientRect().height) + "px";
-    }, 100);
-})()
