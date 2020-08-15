@@ -19,7 +19,7 @@
 // @require      https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js
 // @require      https://unpkg.com/m3u8-parser@4.4.0/dist/m3u8-parser.min.js
 
-// @require      https://gitcdn.xyz/repo/ShinoharaHare/Animad-Downloader.js/5467a9b50f4f0ecbd8cc42390633f8cf5eac6493/public/ffmpeg.js
+// @require      https://gitcdn.xyz/cdn/ShinoharaHare/Animad-Downloader.js/ae18350d2b4531dbc7bfb859a657f9b820fb01c0/public/ffmpeg.js
 // @require      https://gitcdn.xyz/cdn/ShinoharaHare/Animad-Downloader.js/c9e1c0e7fddb7c8e873ab3895cd72ea1630fd360/public/v-dialog-dragable.js
 // ==/UserScript==
 
@@ -57,7 +57,6 @@
         <v-main>
             <v-dialog hide-overlay persistent no-click-animation origin="bottom right" max-width="800" max-height="500"
                 :retain-focus="false" v-model="dialog" ref="dialog">
-
                 <template v-slot:activator="{ on, attrs }">
                     <div class="v-btn--fab v-btn--bottom  v-btn--right v-btn--fixed v-size--default" ref="fab" style="pointer-events: none;">
                         <v-fab-transition>
