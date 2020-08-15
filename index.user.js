@@ -59,7 +59,7 @@
                 :retain-focus="false" v-model="dialog" ref="dialog">
 
                 <template v-slot:activator="{ on, attrs }">
-                    <div class="v-btn--fab v-btn--bottom  v-btn--right v-btn--fixed v-size--default" ref="fab">
+                    <div class="v-btn--fab v-btn--bottom  v-btn--right v-btn--fixed v-size--default" ref="fab" style="pointer-events: none;">
                         <v-fab-transition>
                             <v-btn dark fab v-bind="attrs" v-on="on" v-show="!overlapped">
                                 <v-icon>mdi-download</v-icon>
